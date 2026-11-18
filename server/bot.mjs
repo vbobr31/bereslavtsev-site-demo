@@ -33,7 +33,9 @@ export function createBot({ app, owners, transport, shareDetails = false }) {
     const row = db.prepare('SELECT * FROM appointments WHERE id=?').get(number);
     if (!row) return send(id, 'Заявка не найдена.');
     const data = JSON.parse(row.body);
-    const details = shareDetails ? `\n${data.name}\n${data.phone}\n${data.email}\n${data.service}\n${data.when.replace('T', ' ')} МСК\n${data.comment}` : '';
+    const details = shareDetails
+      ? '\n' + [data.name, data.phone, data.email, data.service, data.comment].filter(Boolean).join('\n')
+      : '';
     return send(id, `Заявка №${row.id} · ${stages[row.status]}${details}`,
       [...stages.map((stage, index) => [key(stage, `status:${row.id}:${index}`)]), [key('К списку', 'requests')]]);
   }

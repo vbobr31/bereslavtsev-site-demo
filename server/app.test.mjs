@@ -13,7 +13,7 @@ test('HTTP: validation, retries, duplicate protection and unavailable storage', 
   t.after(() => app.server.close());
   const url = origin + ':' + app.server.address().port;
   const data = { name: 'Тестовое Имя', phone: '+7 (999) 000-00-00', email: 'test@example.test',
-    service: 'consultation', when: '2099-11-20T12:00', comment: '', consent: true, consentVersion: 'test-v1' };
+    service: 'consultation', comment: '', consent: true, consentVersion: 'test-v1' };
   const post = (body, key = randomUUID(), source = origin) => fetch(url + '/api/appointments', {
     method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': key, origin: source },
     body: JSON.stringify(body)
@@ -22,7 +22,7 @@ test('HTTP: validation, retries, duplicate protection and unavailable storage', 
   assert.equal((await fetch(url + '/architecture.jpg')).status, 200);
   assert.equal((await fetch(url + '/privacy.html')).status, 200);
   assert.equal((await post(data, randomUUID(), 'https://other.example')).status, 403);
-  for (const fields of [{ consent: false }, { phone: 'abc' }, { service: 'hidden' }, { when: '2099-02-30T12:00' }]) {
+  for (const fields of [{ consent: false }, { phone: 'abc' }, { service: 'hidden' }, { email: 'invalid' }, { phone: '+1 900 123 45 67' }]) {
     assert.equal((await post({ ...data, ...fields })).status, 422);
   }
   const key = randomUUID();
@@ -31,6 +31,14 @@ test('HTTP: validation, retries, duplicate protection and unavailable storage', 
   for (const result of results) assert.equal((await result.json()).id, 1);
   assert.equal((await post({ ...data, name: 'Изменено' }, key)).status, 409);
   assert.equal(app.db.prepare('SELECT COUNT(*) AS count FROM appointments').get().count, 1);
+  for (const phone of ['89001234567', '9001234567', '+7 (900) 123-45-67']) {
+    const response = await post({ ...data, phone, email: undefined });
+    assert.equal(response.status, 201);
+    const row = app.db.prepare('SELECT body FROM appointments WHERE id=?').get((await response.json()).id);
+    const stored = JSON.parse(row.body);
+    assert.equal(stored.phone, '+79001234567');
+    assert.equal(stored.email, '');
+  }
   app.db.close();
   assert.equal((await post(data)).status, 503);
 });

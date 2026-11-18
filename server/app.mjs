@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createHash, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { DatabaseSync } from 'node:sqlite';
+import { normalizePhone } from '../site/phone.js';
 
 const root = new URL('../site/', import.meta.url);
 export const stages = ['Новая', 'Связались', 'Назначена', 'Закрыта'];
@@ -9,10 +10,10 @@ export const seed = {
   intro: 'Юридическая консультация, с которой можно начать разговор о вашей ситуации.',
   phone: '+7 (4722) 202-835', email: 'headlaw@mail.ru',
   services: [{ id: 'consultation', title: 'Первичная консультация',
-    description: 'Обсудить вопрос и определить возможные следующие шаги.', visible: true }]
+    description: 'На первой встрече можно обсудить обстоятельства, уточнить, какие документы могут понадобиться, и определить дальнейшие шаги.', visible: true }]
 };
 const files = { '': 'index.html', 'index.html': 'index.html', 'style.css': 'style.css',
-  'config.js': 'config.js', 'app.js': 'app.js', 'architecture.jpg': 'architecture.jpg',
+  'config.js': 'config.js', 'app.js': 'app.js', 'phone.js': 'phone.js', 'architecture.jpg': 'architecture.jpg',
   'privacy.html': 'privacy.html', 'consent.html': 'consent.html', 'cookies.html': 'cookies.html' };
 const types = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8',
   css: 'text/css; charset=utf-8', jpg: 'image/jpeg' };
@@ -109,18 +110,15 @@ export function createApp({ database = ':memory:', origin, mode = 'test', consen
         catch { return error(400, 'Некорректные данные.'); }
         if (!data || typeof data !== 'object') return error(400, 'Некорректные данные.');
         const name = field(data.name, 80);
-        const phone = field(data.phone, 30);
-        const email = field(data.email, 160);
+        const phone = normalizePhone(data.phone);
+        const email = field(data.email ?? '', 160);
         const comment = field(data.comment ?? '', 300);
         const service = content().services.find(item => item.visible && item.id === data.service);
-        const when = typeof data.when === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(data.when)
-          ? Date.parse(data.when + ':00+03:00') : NaN;
-        const realTime = Number.isFinite(when) && new Date(when + 10800000).toISOString().slice(0, 16) === data.when;
-        if (!name || !isPhone(phone) || !isEmail(email) || comment === null || !service ||
-            !realTime || when <= Date.now() || data.consent !== true || data.consentVersion !== consentVersion) {
-          return error(422, 'Проверьте имя, контакты, услугу, время и согласие на обработку данных.');
+        if (!name || !phone || email === null || (email && !isEmail(email)) ||
+            comment === null || !service || data.consent !== true || data.consentVersion !== consentVersion) {
+          return error(422, 'Проверьте имя, телефон, почту (если указана), услугу и согласие на обработку данных.');
         }
-        const payload = { name, phone, email, comment, service: service.title, when: data.when, consentVersion };
+        const payload = { name, phone, email, comment, service: service.title, consentVersion };
         const result = db.prepare('INSERT INTO appointments (request_key,fingerprint,created,body) VALUES (?,?,?,?)')
           .run(key, fingerprint, new Date().toISOString(), JSON.stringify(payload));
         return send(201, { id: Number(result.lastInsertRowid) });

@@ -1,4 +1,5 @@
 import { mode, consentVersion } from './config.js';
+import { normalizePhone } from './phone.js';
 
 const form = document.querySelector('#appointment');
 const status = document.querySelector('#form-status');
@@ -98,15 +99,10 @@ if (live) {
 form.addEventListener('submit', async event => {
   event.preventDefault();
   const data = Object.fromEntries(new FormData(form));
-  const digits = data.phone.replace(/\D/g, '');
-  if (digits.length < 10 || digits.length > 15 || !/^\+?[\d ().-]+$/.test(data.phone)) {
-    status.textContent = 'Проверьте номер телефона. Укажите от 10 до 15 цифр.';
+  data.phone = normalizePhone(data.phone);
+  if (!data.phone) {
+    status.textContent = 'Введите российский номер в формате +7…, 8… или 9… (10 цифр для мобильного без префикса).';
     form.elements.phone.focus();
-    return;
-  }
-  if (Date.parse(data.when + ':00+03:00') <= Date.now()) {
-    status.textContent = 'Выберите время в будущем по Москве.';
-    form.elements.when.focus();
     return;
   }
   if (!live) {
