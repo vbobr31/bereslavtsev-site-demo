@@ -14,6 +14,7 @@ export const seed = {
 };
 const files = { '': 'index.html', 'index.html': 'index.html', 'style.css': 'style.css',
   'config.js': 'config.js', 'app.js': 'app.js', 'phone.js': 'phone.js', 'architecture.jpg': 'architecture.jpg',
+  'about.html': 'about.html', 'services.html': 'services.html',
   'privacy.html': 'privacy.html', 'consent.html': 'consent.html', 'cookies.html': 'cookies.html' };
 const types = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8',
   css: 'text/css; charset=utf-8', jpg: 'image/jpeg' };

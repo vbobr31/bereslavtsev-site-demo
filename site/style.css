@@ -4,3 +4,23 @@
 @media(max-width:900px){.wrap{width:calc(100% - 52px)}.hero{gap:24px}.header nav{gap:14px}.split{gap:30px}}
 @media(max-width:650px){.wrap{width:calc(100% - 36px)}.header{flex-wrap:wrap;padding-block:13px;min-height:auto;gap:12px}.header nav{order:3;width:100%;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px}.header .button{padding-inline:10px;gap:7px}.hero{grid-template-columns:1fr;padding-block:20px 32px;gap:17px}.hero-text{padding-block:18px 6px}.hero h1{font-size:clamp(2.65rem,11.4vw,4.8rem)}.hero-image{aspect-ratio:1.45}.split,.about,.steps{grid-template-columns:1fr;gap:20px}.about .eyebrow{margin-bottom:0}.foot{display:grid}.fields{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+
+/* Quiet interior pages and a lighter services overview. */
+:root{--paper:#f9f7f3;--ink:#292724;--wine:#483d35;--dark:#34302c;--muted:#625b54;--line:#dcd5cc}
+.demo{background:#f1eee8;color:#635b53;letter-spacing:0;font-size:.73rem}
+.header{min-height:78px}.header nav [aria-current=page]{text-decoration:underline}
+.hero{grid-template-columns:1.4fr .6fr;gap:clamp(24px,5vw,68px);padding-block:46px 58px}
+.hero h1{font-size:clamp(3rem,6.4vw,5.75rem);letter-spacing:-.055em}
+.hero-image{aspect-ratio:1.12;background:#dfd6cb}.hero-image img{filter:saturate(.5);opacity:.9}
+.hero .eyebrow span{display:none}
+h2{font-size:clamp(2.1rem,4vw,3.65rem)}
+h3{font-size:clamp(1.45rem,2.4vw,1.9rem)}
+.booking{background:#f0ece5}.overview{background:#f2efe9}
+.overview article{border-top:1px solid var(--line);padding:18px 0}
+.overview article p{margin:.5rem 0;color:var(--muted)}
+.overview article a,.about a,.overview .split>div:first-child>a{font-size:.91rem}
+.dark .eyebrow,.dark small{color:#e0d7cc}
+.editorial{max-width:820px;margin-inline:auto}.editorial h1{font-size:clamp(2.7rem,6.4vw,5.1rem);letter-spacing:-.05em;margin-bottom:24px}.editorial h2{font-size:clamp(1.6rem,3vw,2.1rem);margin:34px 0 12px}
+.editorial>p:not(.eyebrow){max-width:65ch}.back{display:inline-block;color:var(--muted);margin-bottom:24px;font-size:.87rem}
+.page-next{border-top:1px solid var(--line);margin-top:36px;padding-top:22px;display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+@media(max-width:650px){.hero{grid-template-columns:1fr;gap:16px;padding-block:20px 34px}.hero h1{font-size:clamp(2.65rem,10.3vw,4.3rem)}.hero-image{aspect-ratio:1.9}.header{min-height:auto}}
