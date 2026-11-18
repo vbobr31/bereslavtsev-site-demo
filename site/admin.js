@@ -1,8 +1,14 @@
 import { mode } from './config.js';
-import { readDemoRequests, writeDemoRequests } from './demo-requests.js';
+import { readDemoRequests, writeDemoRequests, requestsKey } from './demo-requests.js';
 
 const list = document.querySelector('#requests');
 const message = document.querySelector('#admin-status');
+const count = document.querySelector('#request-count');
+const emailForm = document.querySelector('#email-settings');
+const emailStatus = document.querySelector('#email-status');
+const preview = document.querySelector('#email-preview');
+const recipientField = emailForm.elements.recipient;
+const emailKey = 'bereslavtsev-demo-recipient-v1';
 const statuses = { new: 'Новая', contacted: 'Связались', scheduled: 'Назначена', closed: 'Закрыта' };
 
 function update(id, change) {
@@ -19,6 +25,11 @@ function update(id, change) {
 
 function render() {
   const requests = readDemoRequests();
+  const newCount = requests.filter(item => item.status === 'new').length;
+  count.textContent = `Новые: ${newCount} · Всего: ${requests.length}`;
+  const recipient = localStorage.getItem(emailKey);
+  preview.hidden = !recipient || !newCount;
+  if (!preview.hidden) preview.textContent = `Пример письма для ${recipient} — Новая заявка на консультацию. Откройте панель заявок.`;
   list.replaceChildren();
   if (!requests.length) {
     const empty = document.createElement('li');
@@ -50,7 +61,25 @@ function render() {
 }
 
 if (mode === 'demo') {
-  try { render(); } catch { message.textContent = 'Хранилище браузера недоступно.'; }
+  try {
+    recipientField.value = localStorage.getItem(emailKey) || '';
+    emailForm.querySelector('button').disabled = false;
+    emailForm.addEventListener('submit', event => {
+      event.preventDefault();
+      try {
+        localStorage.setItem(emailKey, recipientField.value.trim());
+        emailStatus.textContent = 'Адрес сохранён в этом браузере. В демо письма не отправляются.';
+        render();
+      } catch { emailStatus.textContent = 'Браузер не разрешил сохранить адрес.'; }
+    });
+    window.addEventListener('storage', event => {
+      if ([requestsKey, emailKey, null].includes(event.key)) {
+        if (event.key !== requestsKey) recipientField.value = localStorage.getItem(emailKey) || '';
+        render();
+      }
+    });
+    render();
+  } catch { message.textContent = 'Хранилище браузера недоступно.'; }
 } else {
   message.textContent = 'Демо-панель доступна в статической версии сайта.';
 }

@@ -34,3 +34,7 @@ h3{font-size:clamp(1.45rem,2.4vw,1.9rem)}
 .request-list li{border-top:1px solid var(--line);padding:18px 0;overflow-wrap:anywhere}
 .request-list li p{margin:8px 0 12px}
 .request-list select{width:min(220px,100%);margin-bottom:12px}
+.notification-settings{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:28px;padding-bottom:16px}
+.notification-settings form{max-width:420px;display:grid;gap:10px;margin:14px 0}
+.notification-settings button{justify-self:start}
+#request-count{font-weight:600}

@@ -3,11 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import { test } from 'node:test';
 import { createApp } from './app.mjs';
+import { emailNotifier } from './email.mjs';
 import { createBot } from './bot.mjs';
 
 test('HTTP: validation, retries, duplicate protection and unavailable storage', async t => {
   const origin = 'http://127.0.0.1';
-  const app = createApp({ origin });
+  const app = createApp({ origin, emailRecipient: 'owner@example.test' });
   app.server.listen(0, '127.0.0.1');
   await once(app.server, 'listening');
   t.after(() => app.server.close());
@@ -31,6 +32,20 @@ test('HTTP: validation, retries, duplicate protection and unavailable storage', 
   for (const result of results) assert.equal((await result.json()).id, 1);
   assert.equal((await post({ ...data, name: 'Изменено' }, key)).status, 409);
   assert.equal(app.db.prepare('SELECT COUNT(*) AS count FROM appointments').get().count, 1);
+  const sentEmails = [];
+  const notifyEmail = emailNotifier({ db: app.db, token: 'mock', from: 'site@example.test',
+    send: async (_url, options) => {
+      sentEmails.push(JSON.parse(options.body));
+      return { ok: sentEmails.length > 1 };
+    }
+  });
+  await assert.rejects(notifyEmail());
+  await notifyEmail();
+  await notifyEmail();
+  assert.equal(sentEmails.length, 2);
+  assert.deepEqual(sentEmails[0], sentEmails[1]);
+  assert.deepEqual(sentEmails[1].to, ['owner@example.test']);
+  assert.doesNotMatch(JSON.stringify(sentEmails[1]), /Тестовое Имя|000-00-00/);
   for (const phone of ['89001234567', '9001234567', '+7 (900) 123-45-67']) {
     const response = await post({ ...data, phone, email: undefined });
     assert.equal(response.status, 201);

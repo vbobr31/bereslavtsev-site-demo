@@ -1,17 +1,22 @@
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { createApp } from './app.mjs';
+import { createApp, isEmail } from './app.mjs';
 import { createBot, telegram } from './bot.mjs';
+import { emailNotifier } from './email.mjs';
 
 process.umask(0o077);
 const { HOST = '127.0.0.1', PORT = '8080', PUBLIC_ORIGIN = 'http://127.0.0.1:' + PORT,
   DATABASE_PATH = './data/appointments.sqlite', APP_MODE = 'test', BOT_TOKEN,
-  OWNER_IDS = '', LEGAL_DIR, CONSENT_VERSION = 'test-v1', TELEGRAM_PERSONAL_DATA } = process.env;
+  OWNER_IDS = '', LEGAL_DIR, CONSENT_VERSION = 'test-v1', TELEGRAM_PERSONAL_DATA, NOTIFY_EMAIL, EMAIL_FROM, RESEND_API_KEY } = process.env;
 if (!['test', 'live'].includes(APP_MODE)) throw Error('APP_MODE must be test or live');
 const owners = OWNER_IDS.split(',').map(id => id.trim()).filter(Boolean);
 if (owners.some(id => !/^\d+$/.test(id)) || (BOT_TOKEN && !owners.length)) throw Error('Set valid OWNER_IDS');
 if (BOT_TOKEN && !/^\d+:[\w-]+$/.test(BOT_TOKEN)) throw Error('Invalid BOT_TOKEN format');
+const emailEnabled = Boolean(NOTIFY_EMAIL || EMAIL_FROM || RESEND_API_KEY);
+if (emailEnabled && (APP_MODE !== 'live' || !isEmail(NOTIFY_EMAIL) || !isEmail(EMAIL_FROM) || !RESEND_API_KEY)) {
+  throw Error('Email requires live mode, NOTIFY_EMAIL, EMAIL_FROM and RESEND_API_KEY.');
+}
 const legal = {};
 if (APP_MODE === 'live') {
   if (!BOT_TOKEN || !LEGAL_DIR || CONSENT_VERSION === 'test-v1' ||
@@ -22,7 +27,7 @@ if (APP_MODE === 'live') {
 }
 await mkdir(dirname(DATABASE_PATH), { recursive: true });
 const app = createApp({ database: DATABASE_PATH, origin: PUBLIC_ORIGIN, mode: APP_MODE,
-  consentVersion: CONSENT_VERSION, legal });
+  consentVersion: CONSENT_VERSION, legal, emailRecipient: emailEnabled ? NOTIFY_EMAIL : '' });
 const transport = BOT_TOKEN ? telegram(BOT_TOKEN) : {
   send: async (_id, text) => console.log('[mock Telegram]', text)
 };
@@ -49,6 +54,15 @@ async function updates() {
       await delay(4000);
     }
   }
+}
+if (emailEnabled) {
+  const notifyEmail = emailNotifier({ db: app.db, token: RESEND_API_KEY, from: EMAIL_FROM });
+  void (async () => {
+    for (;;) {
+      try { await notifyEmail(); } catch { console.error('Email notification failed. Will retry.'); }
+      await delay(30000);
+    }
+  })();
 }
 void notifications();
 if (BOT_TOKEN) void updates();

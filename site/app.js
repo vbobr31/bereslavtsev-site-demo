@@ -81,10 +81,10 @@ function renderContent({ services, phone, email, intro }) {
 
 if (!live) submit.disabled = false;
 if (live) {
-  document.querySelector('#mode').textContent = mode === 'test' ? 'Тестовый режим · используйте вымышленные данные' : '';
-  document.querySelector('#mode').hidden = mode === 'live';
   document.querySelector('.demo-admin-link').hidden = true;
-  document.querySelector('#form-note').textContent = 'Укажите, как с вами связаться для согласования консультации.';
+  document.querySelector('#form-note').textContent = mode === 'test'
+    ? 'Тестовый режим. Используйте вымышленные данные.'
+    : 'Укажите, как с вами связаться для согласования консультации.';
   for (const [field, value] of [['name', 'name'], ['phone', 'tel'], ['email', 'email']]) {
     if (mode === 'live') form.elements[field].autocomplete = value;
   }

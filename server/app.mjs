@@ -29,7 +29,7 @@ export const isPhone = value => typeof value === 'string' && phonePattern.test(v
   /^\d{10,15}$/.test(value.replace(/\D/g, ''));
 
 const field = (value, max) => typeof value === 'string' && value.length <= max ? value.trim() : null;
-export function createApp({ database = ':memory:', origin, mode = 'test', consentVersion = 'test-v1', legal = {} } = {}) {
+export function createApp({ database = ':memory:', origin, mode = 'test', consentVersion = 'test-v1', legal = {}, emailRecipient = '' } = {}) {
   const db = new DatabaseSync(database);
   db.exec(`
     PRAGMA journal_mode = WAL;
@@ -39,6 +39,10 @@ export function createApp({ database = ':memory:', origin, mode = 'test', consen
       id INTEGER PRIMARY KEY, request_key TEXT UNIQUE NOT NULL, fingerprint TEXT NOT NULL,
       created TEXT NOT NULL, body TEXT NOT NULL, status INTEGER NOT NULL DEFAULT 0,
       notified INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE IF NOT EXISTS email_outbox (
+      appointment_id INTEGER PRIMARY KEY, recipient TEXT NOT NULL,
+      sent INTEGER NOT NULL DEFAULT 0
     );
     CREATE TABLE IF NOT EXISTS drafts (owner TEXT PRIMARY KEY, token TEXT NOT NULL, body TEXT NOT NULL);
   `);
@@ -124,9 +128,19 @@ export function createApp({ database = ':memory:', origin, mode = 'test', consen
           return error(422, 'Проверьте имя, телефон, почту (если указана), услугу и согласие на обработку данных.');
         }
         const payload = { name, phone, email, comment, service: service.title, consentVersion };
-        const result = db.prepare('INSERT INTO appointments (request_key,fingerprint,created,body) VALUES (?,?,?,?)')
-          .run(key, fingerprint, new Date().toISOString(), JSON.stringify(payload));
-        return send(201, { id: Number(result.lastInsertRowid) });
+        db.exec('BEGIN IMMEDIATE');
+        try {
+          const result = db.prepare('INSERT INTO appointments (request_key,fingerprint,created,body) VALUES (?,?,?,?)')
+            .run(key, fingerprint, new Date().toISOString(), JSON.stringify(payload));
+          const id = Number(result.lastInsertRowid);
+          if (emailRecipient) db.prepare('INSERT INTO email_outbox (appointment_id,recipient) VALUES (?,?)')
+            .run(id, emailRecipient);
+          db.exec('COMMIT');
+          return send(201, { id });
+        } catch (error) {
+          db.exec('ROLLBACK');
+          throw error;
+        }
       }
       if (req.method === 'GET' && Object.hasOwn(files, path.slice(1))) {
         const file = files[path.slice(1)];

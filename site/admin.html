@@ -1,8 +1,13 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Демо-панель заявок</title><link rel="stylesheet" href="style.css"><script type="module" src="admin.js"></script></head>
 <body><header class="wrap header"><a href="./" class="brand"><span class="mark" aria-hidden="true">МБ</span><span>Береславцев<small>Адвокатский кабинет</small></span></a><a href="./#booking">К форме записи</a></header>
-<main class="wrap section editorial"><p class="eyebrow">Демонстрационный проект</p><h1>Панель заявок</h1>
+<main class="wrap section editorial"><h1>Панель заявок</h1>
 <p class="lead">Заполните форму на главной вымышленными данными, затем откройте эту страницу в том же браузере. Заявки видны только здесь и по сети не передаются.</p>
 <p>Панель открывается по ссылке «Демо-панель заявок» внизу главной или сразу после сохранения тестовой заявки. Учётная запись для просмотра демо не требуется.</p>
-<h2>Тестовые заявки</h2><p id="admin-status" role="status"></p><ul id="requests" class="request-list"></ul></main>
+<section class="notification-settings" aria-labelledby="email-title">
+<h2 id="email-title">Уведомления по почте</h2>
+<p>Укажите адрес владельца для уведомлений о новых заявках. В демо можно увидеть пример письма прямо здесь.</p>
+<form id="email-settings" method="post" action="./api/admin/email"><label>Почта для уведомлений<input name="recipient" type="email" maxlength="160" placeholder="owner@example.test" required></label><button class="button outline" type="submit" disabled>Привязать почту</button></form>
+<p id="email-status" role="status"></p><p id="email-preview" hidden></p></section>
+<h2>Заявки</h2><p id="request-count" aria-live="polite" aria-atomic="true"></p><p id="admin-status" role="status"></p><ul id="requests" class="request-list"></ul></main>
 </body></html>
