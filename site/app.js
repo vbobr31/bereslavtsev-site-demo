@@ -1,5 +1,6 @@
 import { mode, consentVersion } from './config.js';
 import { normalizePhone } from './phone.js';
+import { readDemoRequests, writeDemoRequests } from './demo-requests.js';
 
 const form = document.querySelector('#appointment');
 const status = document.querySelector('#form-status');
@@ -82,6 +83,7 @@ if (!live) submit.disabled = false;
 if (live) {
   document.querySelector('#mode').textContent = mode === 'test' ? 'Тестовый режим · используйте вымышленные данные' : '';
   document.querySelector('#mode').hidden = mode === 'live';
+  document.querySelector('.demo-admin-link').hidden = true;
   document.querySelector('#form-note').textContent = 'Укажите, как с вами связаться для согласования консультации.';
   for (const [field, value] of [['name', 'name'], ['phone', 'tel'], ['email', 'email']]) {
     if (mode === 'live') form.elements[field].autocomplete = value;
@@ -106,10 +108,25 @@ form.addEventListener('submit', async event => {
     return;
   }
   if (!live) {
+    try {
+      const requests = readDemoRequests();
+      if (requests.length >= 50) {
+        status.textContent = 'В демо-панели уже 50 заявок. Удалите одну и повторите попытку.';
+        return;
+      }
+      writeDemoRequests([{ ...data, id: crypto.randomUUID(), created: new Date().toISOString(),
+        service: service.selectedOptions[0].textContent, status: 'new' }, ...requests]);
+    } catch {
+      status.textContent = 'Браузер не разрешил сохранить тестовую заявку.';
+      return;
+    }
     submitted = true;
     closeReminder();
     form.reset();
-    status.textContent = 'Форма проверена. Это демонстрация, заявка не отправлена.';
+    const link = document.createElement('a');
+    link.href = 'admin.html';
+    link.textContent = 'Открыть демо-панель';
+    status.replaceChildren('Тестовая заявка сохранена в этом браузере. ', link);
     return;
   }
   data.consent = form.elements.consent.checked;

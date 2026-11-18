@@ -17,6 +17,8 @@ const files = { '': 'index.html', 'index.html': 'index.html', 'style.css': 'styl
   'about.html': 'about.html', 'services.html': 'services.html',
   'consultation.html': 'consultation.html', 'faq.html': 'faq.html',
   'contacts.html': 'contacts.html', 'contacts.js': 'contacts.js',
+  'demo-requests.js': 'demo-requests.js',
+  'documents.html': 'documents.html', 'representation.html': 'representation.html',
   'privacy.html': 'privacy.html', 'consent.html': 'consent.html', 'cookies.html': 'cookies.html' };
 const types = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8',
   css: 'text/css; charset=utf-8', jpg: 'image/jpeg' };
