@@ -1,0 +1,5 @@
+.env*
+!.env.example
+data/
+legal-approved/
+.DS_Store
